@@ -4,13 +4,27 @@ use crate::point::Point;
 use crate::scene::{Color, Scene, Sphere};
 use chrono::{Local, Timelike};
 use image::{DynamicImage, GenericImage, Rgba};
-use rendering::{Intersectable, Ray};
-use scene::{Object, Plane};
+use rendering::Ray;
+use scene::{Intersection, Light, Object, Plane};
 use vector3::Vector3;
 
 pub mod point;
 pub mod rendering;
 pub mod scene;
+
+fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
+    let hit_point = ray.origin + (ray.direction * intersection.distance).into();
+    let surface_normal = intersection.object.surface_normal(&hit_point);
+    let direction_to_light = Vector3::zero() - scene.light.direction;
+    // Lambert's cosine law
+    let light_power = (surface_normal.dot(&direction_to_light) as f32) * scene.light.intensity;
+    // TODO: figure out the derivation
+    // https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/diffuse-lambertian-shading.html
+    // ^^^
+    let light_reflected = intersection.object.albedo() / std::f32::consts::PI;
+    let color = intersection.object.color() * scene.light.color * light_power * light_reflected;
+    color.clamp()
+}
 
 /// Actual rendering process: shooting rays
 fn render(scene: &Scene) -> DynamicImage {
@@ -22,7 +36,7 @@ fn render(scene: &Scene) -> DynamicImage {
             let ray = Ray::create_prime(x, y, scene);
 
             if let Some(intersection) = scene.trace(&ray) {
-                image.put_pixel(x, y, intersection.object.color().to_rgba());
+                image.put_pixel(x, y, get_color(scene, &intersection, &ray).to_rgba());
             } else {
                 image.put_pixel(x, y, black);
             }
@@ -48,6 +62,8 @@ fn get_name(tag: String) -> String {
     )
 }
 
+const ALBEDO: f32 = 1.0;
+
 /// Test render scene
 fn test_render_scene() {
     // Creating example scene
@@ -68,12 +84,13 @@ fn test_render_scene() {
                     green: 1.0,
                     blue: 0.4,
                 },
+                albedo: ALBEDO,
             }),
             Object::Sphere(Sphere {
                 center: Point {
-                    x: 2.0,
+                    x: 6.0,
                     y: 0.0,
-                    z: 3.0,
+                    z: -5.0,
                 },
                 radius: 2.0,
                 color: Color {
@@ -81,6 +98,7 @@ fn test_render_scene() {
                     green: 0.1,
                     blue: 0.8,
                 },
+                albedo: ALBEDO,
             }),
             Object::Plane(Plane {
                 origin: Point {
@@ -98,8 +116,22 @@ fn test_render_scene() {
                     green: 0.2,
                     blue: 0.4,
                 },
+                albedo: ALBEDO,
             }),
         ],
+        light: Light {
+            direction: Vector3 {
+                x: 5.0,
+                y: 5.0,
+                z: -5.0,
+            },
+            color: Color {
+                red: 1.0,
+                green: 1.0,
+                blue: 1.0,
+            },
+            intensity: 1.0,
+        },
     };
 
     // Getting image

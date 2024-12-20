@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 use crate::{point::Point, rendering::Intersectable, Ray};
 use image::Rgba;
 use vector3::Vector3;
@@ -19,6 +21,38 @@ impl Color {
         let c = (MAX as f32 * self.blue) as u8;
         return Rgba([a, b, c, MAX as u8]);
     }
+
+    pub fn clamp(&self) -> Color {
+        Self {
+            red: self.red.max(0.0).min(1.0),
+            green: self.green.max(0.0).min(1.0),
+            blue: self.blue.max(0.0).min(0.0),
+        }
+    }
+}
+
+impl Mul for Color {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self {
+            red: self.red * rhs.red,
+            green: self.green * rhs.green,
+            blue: self.blue * rhs.blue,
+        }
+    }
+}
+
+impl Mul<f32> for Color {
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self {
+            red: self.red * rhs,
+            green: self.green * rhs,
+            blue: self.blue * rhs,
+        }
+    }
 }
 
 /// Object structs: Sphere
@@ -26,6 +60,13 @@ pub struct Sphere {
     pub center: Point,
     pub radius: f64,
     pub color: Color,
+    pub albedo: f32,
+}
+
+impl Sphere {
+    fn surface_normal(&self, hit_point: &Point) -> Vector3 {
+        Vector3::from(*hit_point - self.center).normalize()
+    }
 }
 
 /// Object structs: Plane
@@ -33,6 +74,13 @@ pub struct Plane {
     pub origin: Point,
     pub normal: Vector3,
     pub color: Color,
+    pub albedo: f32,
+}
+
+impl Plane {
+    fn surface_normal(&self, _: &Point) -> Vector3 {
+        Vector3::zero() - self.normal
+    }
 }
 
 /// Scene
@@ -40,9 +88,8 @@ pub struct Scene {
     pub width: u32,
     pub height: u32,
     pub fov: f64,
-    // pub sphere: Sphere,
-    // pub spheres: Vec<Sphere>,
     pub objects: Vec<Object>,
+    pub light: Light,
 }
 
 pub enum Object {
@@ -55,6 +102,18 @@ impl Object {
         match self {
             Object::Plane(plane) => plane.color,
             Object::Sphere(sphere) => sphere.color,
+        }
+    }
+    pub fn albedo(&self) -> f32 {
+        match self {
+            Object::Plane(plane) => plane.albedo,
+            Object::Sphere(sphere) => sphere.albedo,
+        }
+    }
+    pub fn surface_normal(&self, hit_point: &Point) -> Vector3 {
+        match self {
+            Object::Sphere(sphere) => sphere.surface_normal(hit_point),
+            Object::Plane(plane) => plane.surface_normal(hit_point),
         }
     }
 }
@@ -89,4 +148,11 @@ impl Scene {
             .filter_map(|s| s.intersect(ray).map(|d| Intersection::new(d, s)))
             .min_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap())
     }
+}
+
+/// Far away parallel lightning struct
+pub struct Light {
+    pub direction: Vector3,
+    pub color: Color,
+    pub intensity: f32,
 }

@@ -1,9 +1,9 @@
-use std::ops::Sub;
+use std::ops::{Add, Sub};
 
 use vector3::Vector3;
 
 /// Point struct to ...
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
@@ -33,9 +33,31 @@ impl Sub for Point {
     }
 }
 
+impl Add for Point {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
 impl From<Point> for Vector3 {
     fn from(value: Point) -> Self {
         Vector3 {
+            x: value.x,
+            y: value.y,
+            z: value.z,
+        }
+    }
+}
+
+impl From<Vector3> for Point {
+    fn from(value: Vector3) -> Self {
+        Point {
             x: value.x,
             y: value.y,
             z: value.z,
