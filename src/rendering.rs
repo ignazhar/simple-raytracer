@@ -1,4 +1,4 @@
-use crate::scene::{Scene, Sphere};
+use crate::scene::{Plane, Scene, Sphere};
 use vector3::Vector3;
 use crate::point::Point;
 
@@ -48,5 +48,24 @@ impl Intersectable for Sphere {
         // TODO: consider the case that camera is inside the sphere.
 
         Some(adj - inside)
+    }
+}
+
+impl Intersectable for Plane {
+    fn intersect(&self, ray: &Ray) -> Option<f64> {
+        // TODO: figure this out 
+        // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection.html
+        // ^^^
+
+        let normal = self.normal;
+        let denom = normal.dot(&ray.direction);
+        if denom > 1e-6 {
+            let v: Vector3 = (self.origin.clone() - ray.origin.clone()).into();
+            let distance = v.dot(&normal) / denom;
+            if distance >= 0.0 {
+                return Some(distance);
+            }
+        }
+        None
     }
 }

@@ -42,13 +42,3 @@ impl From<Point> for Vector3 {
         }
     }
 }
-
-// impl From<Vector3> for Point {
-//     fn from(value: Vector3) -> Self {
-//         Point {
-//             x: value.x,
-//             y: value.y,
-//             z: value.z,
-//         }
-//     }
-// }
