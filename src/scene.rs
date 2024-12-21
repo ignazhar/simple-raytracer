@@ -1,7 +1,7 @@
-use std::ops::Mul;
+use std::ops::{Add, Mul};
 
 use crate::{point::Point, rendering::Intersectable, Ray};
-use image::Rgba;
+use image::{Rgb, Rgba};
 use vector3::Vector3;
 
 const MAX: i32 = 256;
@@ -20,6 +20,14 @@ impl Color {
         let b = (MAX as f32 * self.green) as u8;
         let c = (MAX as f32 * self.blue) as u8;
         return Rgba([a, b, c, MAX as u8]);
+    }
+
+    pub fn abs(&self) -> Color {
+        Self {
+            red: self.red.abs(),
+            green: self.green.abs(),
+            blue: self.blue.abs(),
+        }
     }
 
     pub fn clamp(&self) -> Color {
@@ -146,6 +154,7 @@ impl Scene {
         self.objects
             .iter()
             .filter_map(|s| s.intersect(ray).map(|d| Intersection::new(d, s)))
+            // .filter(|i| i.distance >= 1e-1)
             .min_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap())
     }
 }

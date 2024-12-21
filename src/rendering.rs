@@ -47,7 +47,21 @@ impl Intersectable for Sphere {
 
         // TODO: consider the case that camera is inside the sphere.
 
-        Some(adj - inside)
+        let t0 = adj - inside;
+        let t1 = adj + inside;
+
+        if t0 < 0.0 && t1 < 0.0 {
+            None
+        } else if t0 < 0.0 {
+            Some(t1)
+        } else if t1 < 0.0 {
+            Some(t0)
+        } else {
+            let distance = if t0 < t1 { t0 } else { t1 };
+            Some(distance)
+        }
+
+        // Some(adj - inside)
     }
 }
 
