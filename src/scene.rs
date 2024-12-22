@@ -1,4 +1,4 @@
-use std::ops::Mul;
+use std::ops::{Add, AddAssign, Mul};
 
 use crate::{point::Point, rendering::Intersectable, Ray};
 use image::Rgba;
@@ -63,9 +63,30 @@ impl Mul<f32> for Color {
     }
 }
 
+impl Add for Color {
+    type Output = Self;
+    
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            red: self.red + rhs.red,
+            green: self.green + rhs.green,
+            blue: self.blue + rhs.blue,
+        }
+    }
+}
+
+impl AddAssign for Color {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
+    }
+}
+
 // Color constants
 impl Color {
     pub const WHITE: Color = Color {red: 1.0, green: 1.0, blue: 1.0};
+    pub const BLACK: Color = Color {red: 0.0, green: 0.0, blue: 0.0};
+    pub const YELLOW: Color = Color {red: 1.0, green: 1.0, blue: 0.0};
+    pub const DARK_ORANGE: Color = Color {red: 1.0, green: 0.6, blue: 0.0};
 }
 
 /// Object structs: Sphere
@@ -102,7 +123,7 @@ pub struct Scene {
     pub height: u32,
     pub fov: f64,
     pub objects: Vec<Object>,
-    pub light: Light,
+    pub lights: Vec<Light>,
 }
 
 pub enum Object {
