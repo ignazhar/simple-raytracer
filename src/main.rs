@@ -23,7 +23,7 @@ fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
         origin: hit_point + (surface_normal * SHADOW_BIAS).into(),
         direction: direction_to_light,
     };
-    let light_intensity = if let Some(intersection) = scene.trace(&shadow_ray) {
+    let light_intensity = if let Some(_intersection) = scene.trace(&shadow_ray) {
         0.0
     } else {
         scene.light.intensity
@@ -40,8 +40,6 @@ fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
 
 /// Actual rendering process: shooting rays
 fn render(scene: &Scene) -> DynamicImage {
-    normalize(&scene);
-
     let mut image = DynamicImage::new_rgb8(scene.width, scene.height);
     let black = Rgba([0, 0, 0, 0]);
 
@@ -58,15 +56,6 @@ fn render(scene: &Scene) -> DynamicImage {
     }
 
     image
-}
-
-fn normalize(scene: &Scene) {
-    // scene.light.direction = scene.light.direction.normalize();
-    for object in scene.objects.iter() {
-        // match object {
-        //     // Object::Plane(plane) => plane.
-        // }
-    }
 }
 
 const ALBEDO: f32 = 1.0;
@@ -107,7 +96,7 @@ fn test_render_scene() {
                 },
                 albedo: ALBEDO,
             }),
-            Object::Plane(Plane {
+            Object::Plane(Plane { // Floor
                 origin: Point {
                     x: 0.0,
                     y: 2.5,
@@ -125,7 +114,7 @@ fn test_render_scene() {
                 },
                 albedo: ALBEDO,
             }),
-            Object::Plane(Plane {
+            Object::Plane(Plane { // Background
                 origin: Point {
                     x: 0.0,
                     y: 0.0,
@@ -136,11 +125,7 @@ fn test_render_scene() {
                     y: 0.0,
                     z: -1.0,
                 }.normalize(),
-                color: Color {
-                    red: 1.0,
-                    green: 1.0,
-                    blue: 1.0,
-                },
+                color: Color::WHITE * 0.8,
                 albedo: ALBEDO,
             }),
         ],

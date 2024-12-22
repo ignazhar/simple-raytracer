@@ -1,7 +1,7 @@
-use std::ops::{Add, Mul};
+use std::ops::Mul;
 
 use crate::{point::Point, rendering::Intersectable, Ray};
-use image::{Rgb, Rgba};
+use image::Rgba;
 use vector3::Vector3;
 
 const MAX: i32 = 256;
@@ -34,7 +34,7 @@ impl Color {
         Self {
             red: self.red.max(0.0).min(1.0),
             green: self.green.max(0.0).min(1.0),
-            blue: self.blue.max(0.0).min(0.0),
+            blue: self.blue.max(0.0).min(1.0),
         }
     }
 }
@@ -61,6 +61,11 @@ impl Mul<f32> for Color {
             blue: self.blue * rhs,
         }
     }
+}
+
+// Color constants
+impl Color {
+    pub const WHITE: Color = Color {red: 1.0, green: 1.0, blue: 1.0};
 }
 
 /// Object structs: Sphere
