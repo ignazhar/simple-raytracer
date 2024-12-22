@@ -5,7 +5,7 @@ use crate::scene::{Color, Scene, Sphere};
 use chrono::{Local, Timelike};
 use image::{DynamicImage, GenericImage, Rgba};
 use rendering::Ray;
-use scene::{Intersection, Light, Object, Plane};
+use scene::{DirectionalLight, Intersection, Light, Object, Plane, SphericalLight};
 use vector3::Vector3;
 
 pub mod point;
@@ -20,25 +20,45 @@ fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
 
     let mut color = Color::BLACK;
 
-    for light in &scene.lights {
-        let direction_to_light = Vector3::zero() - light.direction;
+    for light_source in &scene.lights {
+        let direction_to_light = match light_source {
+            Light::Directional(light) => Vector3::zero() - light.direction,
+            Light::Spherical(light) => Vector3::from(light.position - hit_point).normalize(),
+        };
 
         let shadow_ray = Ray {
             origin: hit_point + (surface_normal * SHADOW_BIAS).into(),
             direction: direction_to_light,
         };
-        let light_intensity = if let Some(_intersection) = scene.trace(&shadow_ray) {
-            0.0
-        } else {
-            light.intensity
+
+        let light_intensity = match light_source {
+            Light::Directional(light) => if let Some(_intersection) = scene.trace(&shadow_ray) {
+                0.0
+            } else {
+                light.intensity
+            },
+            Light::Spherical(light) => {
+                let d_sq = (hit_point - light.position).magnitude_sq();
+                let d = d_sq.sqrt();
+                if let Some(intersection) = scene.trace(&shadow_ray) {
+                    if intersection.distance < d {
+                        light.intensity / (4.0 * std::f32::consts::PI * (d_sq as f32))
+                    } else {
+                        0.0
+                    }
+                } else {
+                    light.intensity / (4.0 * std::f32::consts::PI * (d_sq as f32))
+                }
+            }
         };
+
         // Lambert's cosine law
         let light_power = (surface_normal.dot(&direction_to_light) as f32) * light_intensity;
         // TODO: figure out the derivation
         // https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/diffuse-lambertian-shading.html
         // ^^^
         let light_reflected = intersection.object.albedo() / std::f32::consts::PI;
-        color += intersection.object.color() * light.color * light_power * light_reflected;
+        color += intersection.object.color() * light_source.color() * light_power * light_reflected;
     }
 
     color.clamp()
@@ -64,7 +84,7 @@ fn render(scene: &Scene) -> DynamicImage {
     image
 }
 
-const ALBEDO: f32 = 1.0;
+const ALBEDO: f32 = 0.8;
 
 /// Test render scene
 fn test_render_scene() {
@@ -150,7 +170,7 @@ fn test_render_scene() {
             }),
         ],
         lights: vec![
-            Light {
+            Light::Directional(DirectionalLight {
                 direction: Vector3 {
                     x: 5.0,
                     y: 5.0,
@@ -158,9 +178,9 @@ fn test_render_scene() {
                 }
                 .normalize(),
                 color: Color::WHITE,
-                intensity: 5.0,
-            },
-            Light {
+                intensity: 2.5,
+            }),
+            Light::Directional(DirectionalLight {
                 direction: Vector3 {
                     x: -2.0,
                     y: 3.0,
@@ -168,8 +188,13 @@ fn test_render_scene() {
                 }
                 .normalize(),
                 color: Color::YELLOW,
-                intensity: 3.0,
-            },
+                intensity: 1.5,
+            }),
+            Light::Spherical(SphericalLight {
+                position: Point { x: 0.0, y: -1.0, z: -3.0 },
+                color: Color::RED,
+                intensity: 0.0,
+            })
         ],
     };
 

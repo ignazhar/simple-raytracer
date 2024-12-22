@@ -19,6 +19,9 @@ impl Point {
             z: 0.0,
         }
     }
+    pub fn magnitude_sq(&self) -> f64 {
+        self.x * self.x + self.y * self.y + self.z * self.z
+    }
 }
 
 impl Sub for Point {

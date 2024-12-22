@@ -87,6 +87,7 @@ impl Color {
     pub const BLACK: Color = Color {red: 0.0, green: 0.0, blue: 0.0};
     pub const YELLOW: Color = Color {red: 1.0, green: 1.0, blue: 0.0};
     pub const DARK_ORANGE: Color = Color {red: 1.0, green: 0.6, blue: 0.0};
+    pub const RED: Color = Color {red: 1.0, green: 0.0, blue: 0.0};
 }
 
 /// Object structs: Sphere
@@ -185,9 +186,31 @@ impl Scene {
     }
 }
 
+/// Light
+pub enum Light {
+    Directional(DirectionalLight),
+    Spherical(SphericalLight),
+}
+
 /// Far away parallel lightning struct
-pub struct Light {
+pub struct DirectionalLight {
     pub direction: Vector3,
     pub color: Color,
     pub intensity: f32,
+}
+
+/// Spherical light sources
+pub struct SphericalLight {
+    pub position: Point,
+    pub color: Color,
+    pub intensity: f32,
+}
+
+impl Light {
+    pub fn color(&self) -> Color {
+        match self {
+            Light::Directional(light) => light.color,
+            Light::Spherical(light) => light.color,
+        }
+    }
 }
