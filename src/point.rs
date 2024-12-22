@@ -2,7 +2,7 @@ use std::ops::{Add, Sub};
 
 use vector3::Vector3;
 
-/// Point struct to ...
+/// Point struct
 #[derive(Clone, Copy)]
 pub struct Point {
     pub x: f64,
@@ -10,7 +10,7 @@ pub struct Point {
     pub z: f64,
 }
 
-// Implementations for point
+// Implementations for Point
 impl Point {
     pub fn zero() -> Self {
         Point {

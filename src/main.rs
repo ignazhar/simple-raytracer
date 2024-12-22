@@ -1,18 +1,26 @@
+// foreign crates
 use std::io::{self, BufRead};
-
-use crate::point::Point;
-use crate::scene::{Color, Scene, Sphere};
 use chrono::{Local, Timelike};
 use image::{DynamicImage, GenericImage, Rgba};
-use rendering::Ray;
-use scene::{DirectionalLight, Intersection, Light, Object, Plane, SphericalLight};
 use vector3::Vector3;
 
+// declaring domestic crates
 pub mod point;
 pub mod rendering;
 pub mod scene;
+pub mod color;
+pub mod object;
 
+// domestic crates
+use crate::point::Point;
+use crate::rendering::Ray;
+use crate::scene::{Scene, DirectionalLight, Intersection, Light, SphericalLight};
+use crate::color::Color;
+use crate::object::{Object, Plane, Sphere};
+
+// consts
 const SHADOW_BIAS: f64 = 1e-6;
+const ALBEDO: f32 = 0.8;
 
 fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
     let hit_point = ray.origin + (ray.direction * intersection.distance).into();
@@ -83,8 +91,6 @@ fn render(scene: &Scene) -> DynamicImage {
 
     image
 }
-
-const ALBEDO: f32 = 0.8;
 
 /// Test render scene
 fn test_render_scene() {
@@ -193,7 +199,7 @@ fn test_render_scene() {
             Light::Spherical(SphericalLight {
                 position: Point { x: 0.0, y: -1.0, z: -3.0 },
                 color: Color::RED,
-                intensity: 0.0,
+                intensity: 200.0,
             })
         ],
     };

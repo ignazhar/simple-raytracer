@@ -1,6 +1,5 @@
-use crate::scene::{Plane, Scene, Sphere};
 use vector3::Vector3;
-use crate::point::Point;
+use crate::{scene::Scene, point::Point, object::{Object, Plane, Sphere}};
 
 pub struct Ray {
     pub origin: Point,
@@ -29,6 +28,15 @@ impl Ray {
 
 pub trait Intersectable {
     fn intersect(&self, ray: &Ray) -> Option<f64>;
+}
+
+impl Intersectable for Object {
+    fn intersect(&self, ray: &Ray) -> Option<f64> {
+        match self {
+            Object::Sphere(sphere) => sphere.intersect(ray),
+            Object::Plane(plane) => plane.intersect(ray),
+        }
+    }
 }
 
 impl Intersectable for Sphere {
