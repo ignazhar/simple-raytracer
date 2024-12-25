@@ -1,22 +1,23 @@
 // foreign crates
-use std::io::{self, BufRead};
 use chrono::{Local, Timelike};
 use image::{DynamicImage, GenericImage, Rgba};
+use object::Material;
+use std::io::{self, BufRead};
 use vector3::Vector3;
 
 // declaring domestic crates
+pub mod color;
+pub mod object;
 pub mod point;
 pub mod rendering;
 pub mod scene;
-pub mod color;
-pub mod object;
 
 // domestic crates
-use crate::point::Point;
-use crate::rendering::Ray;
-use crate::scene::{Scene, DirectionalLight, Intersection, Light, SphericalLight};
 use crate::color::Color;
 use crate::object::{Object, Plane, Sphere};
+use crate::point::Point;
+use crate::rendering::Ray;
+use crate::scene::{DirectionalLight, Intersection, Light, Scene, SphericalLight};
 
 // consts
 const SHADOW_BIAS: f64 = 1e-6;
@@ -40,11 +41,13 @@ fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
         };
 
         let light_intensity = match light_source {
-            Light::Directional(light) => if let Some(_intersection) = scene.trace(&shadow_ray) {
-                0.0
-            } else {
-                light.intensity
-            },
+            Light::Directional(light) => {
+                if let Some(_intersection) = scene.trace(&shadow_ray) {
+                    0.0
+                } else {
+                    light.intensity
+                }
+            }
             Light::Spherical(light) => {
                 let d_sq = (hit_point - light.position).magnitude_sq();
                 let d = d_sq.sqrt();
@@ -66,7 +69,7 @@ fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
         // https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/diffuse-lambertian-shading.html
         // ^^^
         let light_reflected = intersection.object.albedo() / std::f32::consts::PI;
-        color += intersection.object.color() * light_source.color() * light_power * light_reflected;
+        color += intersection.object.color(&hit_point) * light_source.color() * light_power * light_reflected;
     }
 
     color.clamp()
@@ -107,12 +110,7 @@ fn test_render_scene() {
                     z: -3.0,
                 },
                 radius: 1.0,
-                color: Color {
-                    red: 0.4,
-                    green: 1.0,
-                    blue: 0.4,
-                },
-                albedo: ALBEDO,
+                material: Material::from_color(Color::LIGHT_GREEN, ALBEDO),
             }),
             Object::Sphere(Sphere {
                 center: Point {
@@ -121,12 +119,7 @@ fn test_render_scene() {
                     z: -5.0,
                 },
                 radius: 2.0,
-                color: Color {
-                    red: 0.8,
-                    green: 0.1,
-                    blue: 0.8,
-                },
-                albedo: ALBEDO,
+                material: Material::from_color(Color::MAGENTA, ALBEDO),
             }),
             Object::Sphere(Sphere {
                 center: Point {
@@ -135,8 +128,7 @@ fn test_render_scene() {
                     z: -7.0,
                 },
                 radius: 2.0,
-                color: Color::DARK_ORANGE,
-                albedo: ALBEDO,
+                material: Material::get_texture(Material::CHECKERBOARD, 10.0, 0.0),
             }),
             Object::Plane(Plane {
                 // Floor
@@ -151,12 +143,7 @@ fn test_render_scene() {
                     z: 0.0,
                 }
                 .normalize(),
-                color: Color {
-                    red: 0.4,
-                    green: 0.4,
-                    blue: 0.8,
-                },
-                albedo: ALBEDO,
+                material: Material::get_texture(Material::WOOD, 0.2, 0.0),
             }),
             Object::Plane(Plane {
                 // Background
@@ -171,8 +158,7 @@ fn test_render_scene() {
                     z: -1.0,
                 }
                 .normalize(),
-                color: Color::WHITE * 0.8,
-                albedo: ALBEDO,
+                material: Material::from_color(Color::WHITE * 0.8, ALBEDO),
             }),
         ],
         lights: vec![
@@ -197,10 +183,14 @@ fn test_render_scene() {
                 intensity: 1.5,
             }),
             Light::Spherical(SphericalLight {
-                position: Point { x: 0.0, y: -1.0, z: -3.0 },
+                position: Point {
+                    x: 0.0,
+                    y: -1.0,
+                    z: -3.0,
+                },
                 color: Color::RED,
                 intensity: 200.0,
-            })
+            }),
         ],
     };
 
