@@ -1,10 +1,9 @@
-use crate::{
-    object::{Object, Plane, Sphere},
-    point::Point,
-    scene::Scene,
-};
 use core::f32;
 use vector3::Vector3;
+
+use crate::object::{Object, Plane, Sphere};
+use crate::point::Point;
+use crate::scene::Scene;
 
 pub struct Ray {
     pub origin: Point,

@@ -77,13 +77,6 @@ impl Material {
 
     pub fn get_texture(path: &str, scaling: f32, offset: f32, surface: Surface) -> Material {
         let img = ImageReader::open(path).unwrap().decode();
-        // match &img {
-        //     Ok(_) => {},
-        //     Err(err) => match err {
-        //         image::ImageError::Decoding(bla) => panic!("        {}", bla),
-        //         _ => {},
-        //     }
-        // }
         Material { color: Coloration::Texture{image: img.unwrap(), scaling, offset}, albedo: ALBEDO, surface: surface }
     }
 
