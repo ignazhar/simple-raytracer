@@ -1,5 +1,3 @@
-// use std::path::Path;
-
 use image::{DynamicImage, GenericImageView, ImageReader};
 use vector3::Vector3;
 use crate::{color::Color, point::Point, rendering::{Intersectable, TextureCoords}, ALBEDO};
@@ -25,8 +23,14 @@ impl Object {
     }
     pub fn surface_normal(&self, hit_point: &Point) -> Vector3 {
         match self {
-            Object::Sphere(sphere) => sphere.surface_normal(hit_point),
             Object::Plane(plane) => plane.surface_normal(hit_point),
+            Object::Sphere(sphere) => sphere.surface_normal(hit_point),
+        }
+    }
+    pub fn surface_type(&self) -> Surface {
+        match self {
+            Object::Plane(plane) => plane.material.surface,
+            Object::Sphere(sphere) => sphere.material.surface,
         }
     }
 }
@@ -63,27 +67,28 @@ impl Plane {
 pub struct Material {
     pub color: Coloration,
     pub albedo: f32,
+    pub surface: Surface,
 }
 
 impl Material {
-    pub fn from_color(color: Color, albedo: f32) -> Material {
-        Material { color: Coloration::Color(color), albedo: albedo }
+    pub fn from_color(color: Color, albedo: f32, surface: Surface) -> Material {
+        Material { color: Coloration::Color(color), albedo: albedo, surface: surface }
     }
 
-    pub fn get_texture(path: &str, scaling: f32, offset: f32) -> Material {
+    pub fn get_texture(path: &str, scaling: f32, offset: f32, surface: Surface) -> Material {
         let img = ImageReader::open(path).unwrap().decode();
-        match &img {
-            Ok(_) => {},
-            Err(err) => match err {
-                image::ImageError::Decoding(bla) => panic!("        {}", bla),
-                _ => {},
-            }
-        }
-        Material { color: Coloration::Texture{image: img.unwrap(), scaling, offset}, albedo: ALBEDO }
+        // match &img {
+        //     Ok(_) => {},
+        //     Err(err) => match err {
+        //         image::ImageError::Decoding(bla) => panic!("        {}", bla),
+        //         _ => {},
+        //     }
+        // }
+        Material { color: Coloration::Texture{image: img.unwrap(), scaling, offset}, albedo: ALBEDO, surface: surface }
     }
 
     pub const CHECKERBOARD: &str = "textures/checkerboard6.png";
-    pub const WOOD: &str = "textures/wood4.png";
+    pub const FLOOR: &str = "textures/floor1.jpg";
 }
 
 pub enum Coloration {
@@ -113,4 +118,11 @@ fn wrap(val: f32, bound: u32) -> u32 {
     } else {
         wrapped_coord as u32
     }
+}
+
+/// Surfaces
+#[derive(Clone, Copy)]
+pub enum Surface {
+    Diffusive,
+    Reflective { reflectivity: f32 },
 }

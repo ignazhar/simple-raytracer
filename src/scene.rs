@@ -8,6 +8,7 @@ pub struct Scene {
     pub fov: f64,
     pub objects: Vec<Object>,
     pub lights: Vec<Light>,
+    pub max_recursion_depth: u32,
 }
 
 impl Scene {

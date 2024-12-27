@@ -1,5 +1,4 @@
 use std::ops::{Add, Sub};
-
 use vector3::Vector3;
 
 /// Point struct

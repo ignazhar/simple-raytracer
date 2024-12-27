@@ -1,10 +1,9 @@
-use core::f32;
-
 use crate::{
     object::{Object, Plane, Sphere},
     point::Point,
     scene::Scene,
 };
+use core::f32;
 use vector3::Vector3;
 
 pub struct Ray {
@@ -30,6 +29,13 @@ impl Ray {
                 z: -1.0,
             }
             .normalize(),
+        }
+    }
+
+    pub fn reflect(&self, hit_point: Point, surface_normal: Vector3) -> Ray {
+        Ray {
+            origin: hit_point + (surface_normal * crate::SHADOW_BIAS).into(),
+            direction: self.direction - (surface_normal * 2.0 * self.direction.dot(&surface_normal)),
         }
     }
 }

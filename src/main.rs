@@ -1,6 +1,6 @@
 // foreign crates
 use chrono::{Local, Timelike};
-use image::{DynamicImage, GenericImage, Rgba};
+use image::{DynamicImage, GenericImage};
 use object::Material;
 use std::io::{self, BufRead};
 use vector3::Vector3;
@@ -14,7 +14,7 @@ pub mod scene;
 
 // domestic crates
 use crate::color::Color;
-use crate::object::{Object, Plane, Sphere};
+use crate::object::{Object, Plane, Sphere, Surface};
 use crate::point::Point;
 use crate::rendering::Ray;
 use crate::scene::{DirectionalLight, Intersection, Light, Scene, SphericalLight};
@@ -23,20 +23,17 @@ use crate::scene::{DirectionalLight, Intersection, Light, Scene, SphericalLight}
 const SHADOW_BIAS: f64 = 1e-6;
 const ALBEDO: f32 = 0.8;
 
-fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
-    let hit_point = ray.origin + (ray.direction * intersection.distance).into();
-    let surface_normal = intersection.object.surface_normal(&hit_point).normalize();
-
+fn shade_diffuse_color(scene: &Scene, intersection: &Intersection, hit_point: &Point, surface_normal: &Vector3) -> Color {
     let mut color = Color::BLACK;
 
     for light_source in &scene.lights {
         let direction_to_light = match light_source {
             Light::Directional(light) => Vector3::zero() - light.direction,
-            Light::Spherical(light) => Vector3::from(light.position - hit_point).normalize(),
+            Light::Spherical(light) => Vector3::from(light.position - *hit_point).normalize(),
         };
 
         let shadow_ray = Ray {
-            origin: hit_point + (surface_normal * SHADOW_BIAS).into(),
+            origin: *hit_point + (*surface_normal * SHADOW_BIAS).into(),
             direction: direction_to_light,
         };
 
@@ -49,7 +46,7 @@ fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
                 }
             }
             Light::Spherical(light) => {
-                let d_sq = (hit_point - light.position).magnitude_sq();
+                let d_sq = (*hit_point - light.position).magnitude_sq();
                 let d = d_sq.sqrt();
                 if let Some(intersection) = scene.trace(&shadow_ray) {
                     if intersection.distance < d {
@@ -75,20 +72,49 @@ fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray) -> Color {
     color.clamp()
 }
 
+fn get_color(scene: &Scene, intersection: &Intersection, ray: &Ray, depth: u32) -> Color {
+    let hit_point = ray.origin + (ray.direction * intersection.distance).into();
+    let surface_normal = intersection.object.surface_normal(&hit_point).normalize();
+
+    let diffuse_color = shade_diffuse_color(scene, intersection, &hit_point, &surface_normal);
+
+    match intersection.object.surface_type() {
+        Surface::Diffusive => diffuse_color,
+        Surface::Reflective { reflectivity } => {
+            let color = diffuse_color * (1.0 - reflectivity) + cast_ray(scene, &ray.reflect(hit_point, surface_normal), depth + 1) * reflectivity;
+            color
+        }
+    }
+}
+
+fn cast_ray(scene: &Scene, ray: &Ray, depth: u32) -> Color {
+    if depth == scene.max_recursion_depth {
+        return Color::BLACK;
+    }
+
+    let intersection = scene.trace(ray);
+    if let Some(blabla) = intersection {
+        get_color(scene, &blabla, ray, depth)
+    } else {
+        Color::BLACK
+    }
+}
+
 /// Actual rendering process: shooting rays
 fn render(scene: &Scene) -> DynamicImage {
     let mut image = DynamicImage::new_rgb8(scene.width, scene.height);
-    let black = Rgba([0, 0, 0, 0]);
+    // let black = Rgba([0, 0, 0, 0]);
 
     for x in 0..scene.width {
         for y in 0..scene.height {
             let ray = Ray::create_prime(x, y, scene);
 
-            if let Some(intersection) = scene.trace(&ray) {
-                image.put_pixel(x, y, get_color(scene, &intersection, &ray).to_rgba());
-            } else {
-                image.put_pixel(x, y, black);
-            }
+            // if let Some(intersection) = scene.trace(&ray) {
+            //     image.put_pixel(x, y, cast_ray(scene, &ray, 0).to_rgba());
+            // } else {
+            //     image.put_pixel(x, y, black);
+            // }
+            image.put_pixel(x, y, cast_ray(scene, &ray, 0).to_rgba());
         }
     }
 
@@ -99,8 +125,8 @@ fn render(scene: &Scene) -> DynamicImage {
 fn test_render_scene() {
     // Creating example scene
     let scene = Scene {
-        width: 800,
-        height: 600,
+        width: 1920,
+        height: 1080,
         fov: 90.0,
         objects: vec![
             Object::Sphere(Sphere {
@@ -110,7 +136,7 @@ fn test_render_scene() {
                     z: -3.0,
                 },
                 radius: 1.0,
-                material: Material::from_color(Color::LIGHT_GREEN, ALBEDO),
+                material: Material::from_color(Color::LIGHT_GREEN, ALBEDO, Surface::Diffusive),
             }),
             Object::Sphere(Sphere {
                 center: Point {
@@ -119,7 +145,7 @@ fn test_render_scene() {
                     z: -5.0,
                 },
                 radius: 2.0,
-                material: Material::from_color(Color::MAGENTA, ALBEDO),
+                material: Material::from_color(Color::MAGENTA, ALBEDO, Surface::Reflective { reflectivity: 0.8 }),
             }),
             Object::Sphere(Sphere {
                 center: Point {
@@ -128,7 +154,7 @@ fn test_render_scene() {
                     z: -7.0,
                 },
                 radius: 2.0,
-                material: Material::get_texture(Material::CHECKERBOARD, 10.0, 0.0),
+                material: Material::get_texture(Material::CHECKERBOARD, 10.0, 0.0, Surface::Diffusive),
             }),
             Object::Plane(Plane {
                 // Floor
@@ -143,23 +169,23 @@ fn test_render_scene() {
                     z: 0.0,
                 }
                 .normalize(),
-                material: Material::get_texture(Material::WOOD, 0.2, 0.0),
+                material: Material::get_texture(Material::FLOOR, 0.2, 0.0, Surface::Reflective { reflectivity: 0.3 }),
             }),
-            Object::Plane(Plane {
-                // Background
-                origin: Point {
-                    x: 0.0,
-                    y: 0.0,
-                    z: -30.0,
-                },
-                normal: Vector3 {
-                    x: 0.0,
-                    y: 0.0,
-                    z: -1.0,
-                }
-                .normalize(),
-                material: Material::from_color(Color::WHITE * 0.8, ALBEDO),
-            }),
+            // Object::Plane(Plane {
+            //     // Background
+            //     origin: Point {
+            //         x: 0.0,
+            //         y: 0.0,
+            //         z: -30.0,
+            //     },
+            //     normal: Vector3 {
+            //         x: 0.0,
+            //         y: 0.0,
+            //         z: -1.0,
+            //     }
+            //     .normalize(),
+            //     material: Material::from_color(Color::WHITE * 0.8, ALBEDO, Surface::Diffusive),
+            // }),
         ],
         lights: vec![
             Light::Directional(DirectionalLight {
@@ -192,6 +218,7 @@ fn test_render_scene() {
                 intensity: 200.0,
             }),
         ],
+        max_recursion_depth: 5,
     };
 
     // Getting image
