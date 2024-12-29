@@ -118,4 +118,14 @@ fn wrap(val: f32, bound: u32) -> u32 {
 pub enum Surface {
     Diffusive,
     Reflective { reflectivity: f32 },
+    Refractive { transparency: f32, index: f32 },
+}
+
+impl Surface {
+    pub fn in_transparent(&self) -> bool {
+        match self {
+            Self::Refractive { transparency: _, index: _ } => true,
+            _ => false,
+        }
+    }
 }

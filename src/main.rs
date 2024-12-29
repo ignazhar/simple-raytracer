@@ -20,14 +20,14 @@ use crate::scene::{DirectionalLight, Light, Scene, SphericalLight};
 use crate::tracing::render;
 
 // consts
-const SHADOW_BIAS: f64 = 1e-6;
+const SHADOW_BIAS: f64 = 1e-3;
 const ALBEDO: f32 = 0.8;
 
 /// Test render scene
 fn test_render_scene() {
     let scene = Scene {
-        width: 1920,
-        height: 1080,
+        width: 800,
+        height: 600,
         fov: 90.0,
         objects: vec![
             Object::Sphere(Sphere {
@@ -57,6 +57,33 @@ fn test_render_scene() {
                 radius: 2.0,
                 material: Material::get_texture(Material::CHECKERBOARD, 10.0, 0.0, Surface::Diffusive),
             }),
+            Object::Sphere(Sphere {
+                center: Point {
+                    x: -3.0,
+                    y: 0.0,
+                    z: -3.0,
+                },
+                radius: 2.0,
+                material: Material::from_color(Color::LIGHT_BLUE, ALBEDO, Surface::Refractive { transparency: 1.0, index: 1.6 }),
+            }),
+            Object::Sphere(Sphere {
+                center: Point {
+                    x: -3.0,
+                    y: 0.0,
+                    z: -3.0,
+                },
+                radius: 1.0,
+                material: Material::from_color(Color::LIGHT_GREEN, ALBEDO, Surface::Diffusive),
+            }),
+            // Object::Sphere(Sphere { // roflosphere
+            //     center: Point {
+            //         x: 0.0,
+            //         y: 0.0,
+            //         z: -101.0,
+            //     },
+            //     radius: 100.0,
+            //     material: Material::from_color(Color::LIGHT_GREEN, ALBEDO, Surface::Refractive { transparency: 1.0, index: 1.2 }),
+            // }),
             Object::Plane(Plane {
                 // Floor
                 origin: Point {

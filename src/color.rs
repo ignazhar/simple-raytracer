@@ -91,4 +91,5 @@ impl Color {
     pub const LIGHT_GREEN: Color = Color { red: 0.4, green: 1.0, blue: 0.4, };
     pub const MAGENTA: Color = Color { red: 0.8, green: 0.1, blue: 0.8, };
     pub const DARK_BLUE: Color = Color { red: 0.4, green: 0.4, blue: 0.8, };
+    pub const LIGHT_BLUE: Color = Color { red: 0.6, green: 0.9, blue: 1.0, };
 }

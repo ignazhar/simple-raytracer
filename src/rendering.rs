@@ -1,4 +1,5 @@
 use core::f32;
+use std::mem::swap;
 use vector3::Vector3;
 
 use crate::object::{Object, Plane, Sphere};
@@ -34,8 +35,93 @@ impl Ray {
     pub fn reflect(&self, hit_point: Point, surface_normal: Vector3) -> Ray {
         Ray {
             origin: hit_point + (surface_normal * crate::SHADOW_BIAS).into(),
-            direction: self.direction - (surface_normal * 2.0 * self.direction.dot(&surface_normal)),
+            direction: self.direction
+                - (surface_normal * 2.0 * self.direction.dot(&surface_normal)),
         }
+    }
+
+    /// Returns (cos_alpha, n1, n2) tuple
+    pub fn get_initial_data(&self, surface_normal: Vector3, index: f32) -> (f64, f64, f64) {
+        let cos_alpha = -self.direction.dot(&surface_normal);
+        let n1 = 1.0;
+        let n2 = index as f64;
+        if cos_alpha < 0.0 {
+            // ray goes from inside to ouside
+            (-cos_alpha, n2, n1)
+        } else {
+            // ray goes from outside to inside
+            (cos_alpha, n1, n2)
+        }
+    }
+
+    pub fn refract(&self, hit_point: Point, surface_normal: Vector3, index: f32) -> Option<Ray> {
+        let mut n = surface_normal;
+        let mut cos_alpha = -surface_normal.dot(&self.direction);
+        let mut n1 = 1.0;
+        let mut n2 = index as f64;
+        if cos_alpha < 0.0 {
+            // inside the surface
+            n = Vector3::zero() - n;
+            swap(&mut n1, &mut n2);
+            cos_alpha = -cos_alpha;
+        } else {
+            // outside the surface
+        }
+
+        let sin_alpha = (1.0 - cos_alpha * cos_alpha).sqrt();
+        let sin_beta = n2 / n1 * sin_alpha;
+
+        if 1.0 - sin_beta * sin_beta < 0.0 {
+            return None;
+        }
+
+        let cos_beta = (1.0 - sin_beta * sin_beta).sqrt();
+
+        let v1 = (Vector3::zero() - n) * cos_alpha;
+        let h1 = self.direction - v1;
+
+        let v2 = (Vector3::zero() - n) * cos_beta;
+        let h2 = h1.normalize() * sin_beta;
+        let r2 = v2 + h2;
+
+        // println!("{} vs {} ==> {} vs {} ===> {} vs {}", n1, n2, cos_alpha, cos_beta, sin_alpha, sin_beta);
+
+        Some(Ray {
+            origin: hit_point - (n * crate::SHADOW_BIAS).into(),
+            direction: r2,
+        })
+    }
+
+    /// Fresnel's equations
+    /// https://en.wikipedia.org/wiki/Fresnel_equations
+    /// return's total effective reflection coefficient R
+    #[allow(dead_code)]
+    pub fn fresnel(&self, surface_normal: Vector3, index: f32) -> f64 {
+        let (cos_alpha, n1, n2) = self.get_initial_data(surface_normal, index);
+        let sin_alpha = (1.0 - cos_alpha * cos_alpha).max(0.0).sqrt();
+        let sin_beta = n1 / n2 * sin_alpha;
+
+        if sin_beta.abs() > 1.0 {
+            return 1.0;
+        }
+        let cos_beta = (1.0 - sin_beta * sin_beta).sqrt();
+
+        let r_s = (n1 * cos_alpha - n2 * cos_beta) / (n1 * cos_alpha + n2 * cos_beta);
+        let r_t = (n1 * cos_beta - n2 * cos_alpha) / (n1 * cos_beta + n2 * cos_alpha);
+
+        let r = 0.5 * (r_s * r_s + r_t * r_t);
+
+        r
+    }
+
+    /// Shlick's approximation
+    /// https://en.wikipedia.org/wiki/Schlick%27s_approximation
+    /// return's total effective reflection coefficient R
+    #[allow(dead_code)]
+    pub fn schlicks(&self, surface_normal: Vector3, index: f32) -> f64 {
+        let (cos_alpha, n1, n2) = self.get_initial_data(surface_normal, index);
+        let r0 = ((n1 - n2) / (n1 + n2)).powi(2);
+        r0 + (1.0 - r0) * (1.0 - cos_alpha).powi(5)
     }
 }
 

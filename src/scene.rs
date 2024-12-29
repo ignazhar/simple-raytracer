@@ -1,5 +1,5 @@
 use vector3::Vector3;
-use crate::{point::Point, object::Object, rendering::{Ray, Intersectable}, color::Color};
+use crate::{color::Color, object::Object, point::Point, rendering::{Intersectable, Ray}};
 
 /// Scene definition
 pub struct Scene {
@@ -16,6 +16,16 @@ impl Scene {
         self.objects
             .iter()
             .filter_map(|s| s.intersect(ray).map(|d| Intersection::new(d, s)))
+            .filter(|i| !i.distance.is_nan())
+            .min_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap())
+    }
+
+    pub fn trace_for_light(&self, ray: &Ray) -> Option<Intersection> {
+        self.objects
+            .iter()
+            .filter_map(|s| s.intersect(ray).map(|d| Intersection::new(d, s)))
+            .filter(|i| !i.distance.is_nan())
+            .filter(|i| !i.object.surface_type().in_transparent())
             .min_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap())
     }
 }
