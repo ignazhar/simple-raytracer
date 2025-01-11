@@ -26,19 +26,19 @@ const ALBEDO: f32 = 0.8;
 /// Test render scene
 fn test_render_scene() {
     let scene = Scene {
-        width: 800,
-        height: 600,
+        width: 1920,
+        height: 1080,
         fov: 90.0,
         objects: vec![
-            Object::Sphere(Sphere {
-                center: Point {
-                    x: 0.0,
-                    y: -1.5,
-                    z: -3.0,
-                },
-                radius: 1.0,
-                material: Material::from_color(Color::LIGHT_GREEN, ALBEDO, Surface::Diffusive),
-            }),
+            // Object::Sphere(Sphere {
+            //     center: Point {
+            //         x: 0.0,
+            //         y: 0.0,
+            //         z: -3.0,
+            //     },
+            //     radius: 1.0,
+            //     material: Material::from_color(Color::WHITE, ALBEDO, Surface::Diffusive),
+            // }),
             Object::Sphere(Sphere {
                 center: Point {
                     x: 4.0,
@@ -46,7 +46,7 @@ fn test_render_scene() {
                     z: -5.0,
                 },
                 radius: 2.0,
-                material: Material::from_color(Color::MAGENTA, ALBEDO, Surface::Reflective { reflectivity: 0.8 }),
+                material: Material::from_color(Color::LIGHT_BLUE, ALBEDO, Surface::Reflective { reflectivity: 0.8 }),
             }),
             Object::Sphere(Sphere {
                 center: Point {
@@ -55,26 +55,26 @@ fn test_render_scene() {
                     z: -7.0,
                 },
                 radius: 2.0,
-                material: Material::get_texture(Material::CHECKERBOARD, 10.0, 0.0, Surface::Diffusive),
+                material: Material::get_texture(Material::WOOD, 2.0, 0.0, Surface::Diffusive),
             }),
             Object::Sphere(Sphere {
                 center: Point {
-                    x: -3.0,
+                    x: -5.0,
                     y: 0.0,
-                    z: -3.0,
+                    z: -4.0,
                 },
                 radius: 2.0,
-                material: Material::from_color(Color::LIGHT_BLUE, ALBEDO, Surface::Refractive { transparency: 1.0, index: 1.6 }),
+                material: Material::from_color(Color::LIGHT_BLUE, ALBEDO, Surface::Refractive { transparency: 1.0, index: 1.33 }),
             }),
-            Object::Sphere(Sphere {
-                center: Point {
-                    x: -3.0,
-                    y: 0.0,
-                    z: -3.0,
-                },
-                radius: 1.0,
-                material: Material::from_color(Color::LIGHT_GREEN, ALBEDO, Surface::Diffusive),
-            }),
+            // Object::Sphere(Sphere {
+            //     center: Point {
+            //         x: -3.0,
+            //         y: 0.0,
+            //         z: -3.0,
+            //     },
+            //     radius: 1.0,
+            //     material: Material::from_color(Color::LIGHT_GREEN, ALBEDO, Surface::Diffusive),
+            // }),
             // Object::Sphere(Sphere { // roflosphere
             //     center: Point {
             //         x: 0.0,
@@ -97,7 +97,7 @@ fn test_render_scene() {
                     z: 0.0,
                 }
                 .normalize(),
-                material: Material::get_texture(Material::FLOOR, 0.2, 0.0, Surface::Reflective { reflectivity: 0.3 }),
+                material: Material::get_texture(Material::CHECKERBOARD, 0.2, 0.0, Surface::Reflective { reflectivity: 0.4 }),
             }),
         ],
         lights: vec![
@@ -127,7 +127,7 @@ fn test_render_scene() {
                     y: -1.0,
                     z: -3.0,
                 },
-                color: Color::RED,
+                color: Color::LIGHT_GREEN,
                 intensity: 200.0,
             }),
         ],

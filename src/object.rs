@@ -82,6 +82,7 @@ impl Material {
 
     pub const CHECKERBOARD: &str = "textures/checkerboard6.png";
     pub const FLOOR: &str = "textures/floor1.jpg";
+    pub const WOOD: &str = "textures/wood4.png";
 }
 
 pub enum Coloration {
