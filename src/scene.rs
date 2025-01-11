@@ -20,14 +20,14 @@ impl Scene {
             .min_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap())
     }
 
-    pub fn trace_for_light(&self, ray: &Ray) -> Option<Intersection> {
-        self.objects
-            .iter()
-            .filter_map(|s| s.intersect(ray).map(|d| Intersection::new(d, s)))
-            .filter(|i| !i.distance.is_nan())
-            .filter(|i| !i.object.surface_type().in_transparent())
-            .min_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap())
-    }
+    // pub fn trace_for_light(&self, ray: &Ray) -> Option<Intersection> {
+    //     self.objects
+    //         .iter()
+    //         .filter_map(|s| s.intersect(ray).map(|d| Intersection::new(d, s)))
+    //         .filter(|i| !i.distance.is_nan())
+    //         .filter(|i| !i.object.surface_type().in_transparent())
+    //         .min_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap())
+    // }
 }
 
 /// Intersection struct

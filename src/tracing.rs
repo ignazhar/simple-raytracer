@@ -29,7 +29,7 @@ fn shade_diffuse_color(
 
         let light_intensity = match light_source {
             Light::Directional(light) => {
-                if let Some(_intersection) = scene.trace_for_light(&shadow_ray) {
+                if let Some(_intersection) = scene.trace(&shadow_ray) {
                     0.0
                 } else {
                     light.intensity
@@ -38,7 +38,7 @@ fn shade_diffuse_color(
             Light::Spherical(light) => {
                 let d_sq = (*hit_point - light.position).magnitude_sq();
                 let d = d_sq.sqrt();
-                if let Some(intersection) = scene.trace_for_light(&shadow_ray) {
+                if let Some(intersection) = scene.trace(&shadow_ray) {
                     if intersection.distance < d {
                         light.intensity / (4.0 * std::f32::consts::PI * (d_sq as f32))
                     } else {

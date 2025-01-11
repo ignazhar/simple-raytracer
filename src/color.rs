@@ -1,6 +1,19 @@
 use image::Rgba;
 use std::ops::{Add, AddAssign, Mul};
 
+// TODO: implement better Gamma Correction
+// http://blog.johnnovak.net/2016/09/21/what-every-coder-should-know-about-gamma/
+
+const GAMMA: f32 = 2.2;
+
+fn gamma_encode(linear: f32) -> f32 {
+    linear.powf(1.0 / GAMMA)
+}
+
+fn gamma_decode(encoded: f32) -> f32 {
+    encoded.powf(GAMMA)
+}
+
 const MAX: f32 = 255.0;
 
 /// Color struct
@@ -15,18 +28,18 @@ pub struct Color {
 impl Color {
     pub fn to_rgba(&self) -> Rgba<u8> {
         return Rgba([
-            (MAX * self.red) as u8,
-            (MAX * self.green) as u8,
-            (MAX * self.blue) as u8,
+            (MAX * gamma_encode(self.red)) as u8,
+            (MAX * gamma_encode(self.green)) as u8,
+            (MAX * gamma_encode(self.blue)) as u8,
             MAX as u8,
         ]);
     }
 
     pub fn from_rgba(rgba: Rgba<u8>) -> Color {
         Color {
-            red: rgba.0[0] as f32 / MAX,
-            green: rgba.0[1] as f32 / MAX,
-            blue: rgba.0[2] as f32 / MAX,
+            red: gamma_decode(rgba.0[0] as f32 / MAX),
+            green: gamma_decode(rgba.0[1] as f32 / MAX),
+            blue: gamma_decode(rgba.0[2] as f32 / MAX),
         }
     }
 
